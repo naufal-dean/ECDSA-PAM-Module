@@ -4,14 +4,14 @@ from . import Point, is_identity_point, ECC
 from .util import mod_inverse
 
 
-class ECDSA:
-    def __init__(self, curve: ECC):
+class ECDSA(object):
+    def __init__(self, curve):
         # TODO: remove
         assert isinstance(curve, ECC)
 
         self.curve = curve
 
-    def sign(self, hash: int) -> (int, int):
+    def sign(self, hash):
         # initial check if the private key contained in the curve
         if self.curve.d is None:
             raise Exception("Private key d is needed to sign message")
@@ -33,7 +33,7 @@ class ECDSA:
             break
         return (r, s)
 
-    def verify(self, hash: int, r: int, s: int) -> bool:
+    def verify(self, hash, r, s):
         # check r and s in [1, n - 1]
         if not all(list((1 <= r, s < self.curve.n))):
             return False

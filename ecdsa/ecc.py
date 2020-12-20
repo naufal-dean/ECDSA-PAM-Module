@@ -4,8 +4,8 @@ from . import Point, get_identity_point, is_identity_point
 from .util import mod_inverse
 
 
-class ECC:
-    def __init__(self, a, b, p, n=None, G:Point=None, auto_gen_group=True, auto_gen_key=True):
+class ECC(object):
+    def __init__(self, a, b, p, n=None, G=None, auto_gen_group=True, auto_gen_key=True):
         # initial check
         assert (4 * a ** 3 + 27 * b ** 2 != 0)
         # properties
@@ -29,13 +29,13 @@ class ECC:
         if auto_gen_key:
             self.generate_key()
 
-    def set_d(self, d:int):
+    def set_d(self, d):
         self.d = d
 
-    def set_Q(self, Q:Point):
+    def set_Q(self, Q):
         self.Q = Q
 
-    def generate_group(self) -> list:
+    def generate_group(self):
         result = []
         for i in range(self.p):
             x = (i**3 + self.a*i + self.b) % self.p
@@ -44,12 +44,12 @@ class ECC:
                     result.append(Point(i, j))
         return result
 
-    def get_group(self) -> list:
+    def get_group(self):
         if self.Group is None:
             self.Group = self.generate_group()
         return self.Group
 
-    def add_points(self, P: Point, Q: Point) -> Point:
+    def add_points(self, P, Q):
         # TODO: remove
         assert isinstance(P, Point)
         assert isinstance(Q, Point)
@@ -77,7 +77,7 @@ class ECC:
         y = (m * (P.x - x) - P.y) % self.p
         return Point(x, y)
 
-    def multiply(self, k: int, P: Point) -> Point:
+    def multiply(self, k, P):
         # TODO: remove
         assert isinstance(P, Point)
 
@@ -111,7 +111,7 @@ class ECC:
         res += "====================================\n"
         return res
 
-    def save_file(self, filename:str):
+    def save_file(self, filename):
         # filename without extension, [...] indicate optional
         # .priv
         # a b p [n]
@@ -138,7 +138,7 @@ class ECC:
         pub.close()
 
     @classmethod
-    def load_key(cls, filename:str, is_public:bool):
+    def load_key(cls, filename, is_public):
         f = open(filename, "r")
         # parse first line
         line_1 = f.readline().split(" ")
