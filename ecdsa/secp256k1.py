@@ -20,21 +20,30 @@ class ParseKeyError(Exception):
 
 
 class SECP256K1(ECC):
-    def __init__(self, d=None, Q=None):
+    def __init__(self, id, d=None, Q=None):
         super(SECP256K1, self).__init__(a, b, p, n=n, G=G, auto_gen_group=False, auto_gen_key=False)
+        self.id = id
         self.d = d
         self.Q = Q
 
+    def __str__(self):
+        res = super(SECP256K1, self).__str__()
+        res += 'id = ' + str(self.id) + '\n'
+        res += "====================================\n"
+        return res
+
     def pub_key_repr(self):
-        assert self.Q is not None
+        assert self.id is not None and self.Q is not None
         rep = '-----BEGIN SECP256K1 PUBLIC KEY-----\n'
+        rep += str(self.id) + '\n'
         rep += str(self.Q.x) + '\n' + str(self.Q.y) + '\n'
         rep += '-----END SECP256K1 PUBLIC KEY-----\n'
         return rep
 
     def pri_key_repr(self):
-        assert self.d is not None
+        assert self.id is not None and self.d is not None
         rep = '-----BEGIN SECP256K1 PRIVATE KEY-----\n'
+        rep += str(self.id) + '\n'
         rep += str(self.d) + '\n'
         rep += '-----END SECP256K1 PRIVATE KEY-----\n'
         return rep
@@ -47,16 +56,21 @@ class SECP256K1(ECC):
             pattern += r'-----END SECP256K1 \1 KEY-----\n'
             match = re.findall(pattern, rep, re.DOTALL)[0]
             # create curve object
-            curve = cls()
+            curve = cls(None)
             # add public/private key
             if match[0] == 'PUBLIC':
-                curve.Q = Point(*list(map(int, match[1].split('\n')))[:2])
+                id, Qx, Qy = list(map(int, match[1].split('\n')))
+                curve.id = id
+                curve.Q = Point(Qx, Qy)
             elif match[0] == 'PRIVATE':
-                curve.d = int(match[1])
+                id, d = list(map(int, match[1].split('\n')))
+                curve.id = id
+                curve.d = d
                 curve.Q = curve.multiply(curve.d, curve.G)
             else:
                 raise Exception('Invalid key file')
         except Exception as e:
+            print(e)
             raise ParseKeyError()
         else:
             return curve

@@ -1,5 +1,6 @@
 import hashlib
 import os
+import psycopg2
 import subprocess
 import sys
 
@@ -13,6 +14,15 @@ except Exception as e:
 
 
 DEFAULT_USER = 'nobody'
+try:
+    db = psycopg2.connect(dbname="pam", host="localhost", user="postgres", password="postgres")
+except Exception as e:
+    print('[+] Failed to establish db connection. Exiting...')
+    exit(2)
+
+
+class NoMatchedPubKeyError(Exception):
+    pass
 
 
 def get_private_keys_from_usb():
@@ -30,6 +40,17 @@ def get_private_keys_from_usb():
     return keys
 
 
+def get_matched_public_key(id):
+    cursor = db.cursor()
+    cursor.execute('SELECT public_key, signature FROM validation_table WHERE id=%s', (id,))
+    res = cursor.fetchone()
+    if res is not None:
+        public_key, signature = res
+        return public_key
+    else:
+        raise NoMatchedPubKeyError()
+
+
 def pam_sm_authenticate(pamh, flags, argv):
     # Setup user
     try:
@@ -42,7 +63,7 @@ def pam_sm_authenticate(pamh, flags, argv):
         pamh.user = DEFAULT_USER
 
     try:
-        # Verify using all available private key in usb
+        # Sign using all available private key in usb
         for key_path in get_private_keys_from_usb():
             try:
                 print('[+] Trying key {0}:'.format(key_path)),
@@ -57,10 +78,16 @@ def pam_sm_authenticate(pamh, flags, argv):
                 chall_hash = int(hs.hexdigest(), 16)
                 r, s = ecdsa.sign(chall_hash)
 
-                # TODO: implement using pub key in host machine
+                # Get matched public key
+                pubkey = get_matched_public_key(curve.id)
+
+                # Verify signature
+                ecdsa.curve = SECP256K1.parse_repr(pubkey)
                 ecdsa.verify(chall_hash, r, s)
             except LoadKeyError as e:
                 print('invalid key file')
+            except NoMatchedPubKeyError as e:
+                print('no matched pubkey')
             except ValidationError as e:
                 print('validation error')
             except Exception as e:
