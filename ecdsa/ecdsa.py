@@ -4,6 +4,10 @@ from . import Point, is_identity_point, ECC
 from .util import mod_inverse
 
 
+class ValidationError(Exception):
+    pass
+
+
 class ECDSA(object):
     def __init__(self, curve):
         # TODO: remove
@@ -52,4 +56,7 @@ class ECDSA(object):
         if is_identity_point(Point(x1, y1)):
             return False
         # check r == x1 mod n
-        return r == x1 % self.curve.n
+        if r == x1 % self.curve.n:
+            return True
+        else:
+            raise ValidationError()
