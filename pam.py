@@ -1,8 +1,10 @@
+import hashlib
+import os
 import sys
 
 try:
     sys.path.append('/media/sf_Kriptografi-Makalah-2')
-    from ecdsa import SECP256K1, ECDSA
+    from ecdsa import SECP256K1, ECDSA, ValidationError
 except Exception as e:
     print('[+] Error loading ecdsa module. Exiting...')
     print(e)
@@ -10,6 +12,11 @@ except Exception as e:
 
 
 DEFAULT_USER = 'nobody'
+
+
+def get_private_key_from_usb():
+    # TODO: implement
+    return ['dummy']
 
 
 def pam_sm_authenticate(pamh, flags, argv):
@@ -23,19 +30,38 @@ def pam_sm_authenticate(pamh, flags, argv):
     if user == None:
         pamh.user = DEFAULT_USER
 
-    # Init pam using simple sign verify
-    curve = SECP256K1()
-    curve.generate_key()
+    try:
+        # Create curve and ecdsa object
+        # TODO: load curve from key in usb
+        curve = SECP256K1()
+        curve.generate_key()
+        ecdsa = ECDSA(curve)
 
-    ecdsa = ECDSA(curve)
-    r, s = ecdsa.sign(12391023112093805123092410293810251203810238120938401293)
+        # Sign some random string
+        chall = os.urandom(64)
+        hs = hashlib.sha256(chall)
+        chall_hash = int(hs.hexdigest(), 16)
+        r, s = ecdsa.sign(chall_hash)
 
-    if ecdsa.verify(12391023112093805123092410293810251203810238120938401293, r, s):
-        print("Berhasil verifikasi")
-        return pamh.PAM_SUCCESS
-    else :
-        print("Gagal verifikasi")
+        # Verify using all available private key in usb
+        for key_path in get_private_key_from_usb():
+            try:
+                ecdsa.verify(chall_hash, r, s)
+            except ValidationError as e:
+                print('validation error')
+            except Exception as e:
+                print(e)
+            else:
+                print('[+] Authenticated using PAM...')
+                return pamh.PAM_SUCCESS
+    except Exception as e:
+        print(e)
+        print('[+] PAM authentication error...')
         return pamh.PAM_AUTH_ERR
+
+    # Matching private key not found in any usb
+    print('[+] Matching private key not found...')
+    return pamh.PAM_AUTH_ERR
 
 
 def pam_sm_setcred(pamh, flags, argv):
