@@ -27,25 +27,25 @@ class SECP256K1(ECC):
 
     def pub_key_repr(self):
         assert self.Q is not None
-        repr = '-----BEGIN SECP256K1 PUBLIC KEY-----\n'
-        repr += str(self.Q.x) + '\n' + str(self.Q.y) + '\n'
-        repr += '-----END SECP256K1 PUBLIC KEY-----\n'
-        return repr
+        rep = '-----BEGIN SECP256K1 PUBLIC KEY-----\n'
+        rep += str(self.Q.x) + '\n' + str(self.Q.y) + '\n'
+        rep += '-----END SECP256K1 PUBLIC KEY-----\n'
+        return rep
 
     def pri_key_repr(self):
         assert self.d is not None
-        repr = '-----BEGIN SECP256K1 PRIVATE KEY-----\n'
-        repr += str(self.d) + '\n'
-        repr += '-----END SECP256K1 PRIVATE KEY-----\n'
-        return repr
+        rep = '-----BEGIN SECP256K1 PRIVATE KEY-----\n'
+        rep += str(self.d) + '\n'
+        rep += '-----END SECP256K1 PRIVATE KEY-----\n'
+        return rep
 
     @classmethod
-    def parse_repr(cls, repr):
+    def parse_repr(cls, rep):
         try:
             pattern = r'^-----BEGIN SECP256K1 (.*) KEY-----\n'
             pattern += r'(.*)\n'
             pattern += r'-----END SECP256K1 \1 KEY-----\n'
-            match = re.findall(pattern, repr, re.DOTALL)[0]
+            match = re.findall(pattern, rep, re.DOTALL)[0]
             # create curve object
             curve = cls()
             # add public/private key
@@ -62,15 +62,15 @@ class SECP256K1(ECC):
             return curve
 
     def save_file(self, filename):
-        with open(filename + '.pri', 'w') as pri:
+        with open(filename + '.pri', 'wb') as pri:
             pri.write(self.pri_key_repr())
-        with open(filename + '.pub', 'w') as pub:
+        with open(filename + '.pub', 'wb') as pub:
             pub.write(self.pub_key_repr())
 
     @classmethod
     def load_key(cls, filename):
         try:
-            with open(filename, 'r') as f:
+            with open(filename, 'rb') as f:
                 key = f.read()
             curve = cls.parse_repr(key)
         except Exception as e:

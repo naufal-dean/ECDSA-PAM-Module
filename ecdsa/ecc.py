@@ -125,13 +125,13 @@ class ECC(object):
         # Gx Gy
         # Qx Qy
 
-        pri = open(filename + ".pri", "w")
+        pri = open(filename + ".pri", "wb")
         pri.write(str(self.a) + " " + str(self.b) + " " + str(self.p) + " " + str(self.n) + "\n")
         pri.write(str(self.G.x) + " " + str(self.G.y) + "\n")
         pri.write(str(self.d))
         pri.close()
 
-        pub = open(filename + ".pub", "w")
+        pub = open(filename + ".pub", "wb")
         pub.write(str(self.a) + " " + str(self.b) + " " + str(self.p) + " " + str(self.n) + "\n")
         pub.write(str(self.G.x) + " " + str(self.G.y) + "\n")
         pub.write(str(self.Q.x) + " " + str(self.Q.y))
@@ -139,7 +139,7 @@ class ECC(object):
 
     @classmethod
     def load_key(cls, filename, is_public):
-        f = open(filename, "r")
+        f = open(filename, "rb")
         # parse first line
         line_1 = f.readline().split(" ")
         a = int(line_1[0])

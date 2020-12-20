@@ -10,7 +10,6 @@ class ValidationError(Exception):
 
 class ECDSA(object):
     def __init__(self, curve):
-        # TODO: remove
         assert isinstance(curve, ECC)
 
         self.curve = curve
