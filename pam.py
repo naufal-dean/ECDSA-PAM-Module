@@ -4,8 +4,11 @@ import psycopg2
 import subprocess
 import sys
 
+ECDSA_MODULE_PATH = '/media/sf_Kriptografi-Makalah-2'
+SYSTEM_PUBLIC_KEY_PATH = '/home/key.pub'
+
 try:
-    sys.path.append('/media/sf_Kriptografi-Makalah-2')
+    sys.path.append(ECDSA_MODULE_PATH)
     from ecdsa import SECP256K1, LoadKeyError, ECDSA, ValidationError
 except Exception as e:
     print('[+] Error loading ecdsa module. Exiting...')
@@ -45,8 +48,20 @@ def get_matched_public_key(id):
     cursor.execute('SELECT public_key, signature FROM validation_table WHERE id=%s', (id,))
     res = cursor.fetchone()
     if res is not None:
-        public_key, signature = res
-        return public_key
+        try:
+            user_public_key, signature = res
+            r, s = list(map(int, signature.split(',')))
+            # load system private key
+            curve = SECP256K1.load_key(SYSTEM_PUBLIC_KEY_PATH)
+            ecdsa = ECDSA(curve)
+            # validate signature
+            hs = hashlib.sha256(user_public_key)
+            pubkey_hash = int(hs.hexdigest(), 16)
+            ecdsa.verify(pubkey_hash, r, s)
+        except Exception as e:
+            raise NoMatchedPubKeyError()
+        else:
+            return user_public_key
     else:
         raise NoMatchedPubKeyError()
 
@@ -72,14 +87,14 @@ def pam_sm_authenticate(pamh, flags, argv):
                 curve = SECP256K1.load_key(key_path)
                 ecdsa = ECDSA(curve)
 
+                # Get matched public key
+                pubkey = get_matched_public_key(curve.id)
+
                 # Sign some random string
                 chall = os.urandom(64)
                 hs = hashlib.sha256(chall)
                 chall_hash = int(hs.hexdigest(), 16)
                 r, s = ecdsa.sign(chall_hash)
-
-                # Get matched public key
-                pubkey = get_matched_public_key(curve.id)
 
                 # Verify signature
                 ecdsa.curve = SECP256K1.parse_repr(pubkey)

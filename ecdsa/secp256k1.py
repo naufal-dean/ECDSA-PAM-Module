@@ -70,7 +70,6 @@ class SECP256K1(ECC):
             else:
                 raise Exception('Invalid key file')
         except Exception as e:
-            print(e)
             raise ParseKeyError()
         else:
             return curve
