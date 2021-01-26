@@ -1,4 +1,4 @@
-# ECDSA-PAM-Module
+# ECDSA PAM Module
 
 ## Identitas
 Naufal Dean Anugrah (13518123)
