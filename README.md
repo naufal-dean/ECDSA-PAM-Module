@@ -1,10 +1,10 @@
-# Kriptografi-Makalah-2
+# ECDSA-PAM-Module
 
 ## Identitas
 Naufal Dean Anugrah (13518123)
 
 ## Description
-This repository contains code that is used in the paper. And it is intended as a complement only. To use it in real environment, follow the steps in the paper.
+This repository contains code that is used in the [paper](http://informatika.stei.itb.ac.id/~rinaldi.munir/Kriptografi/2020-2021/Makalah-UAS/Makalah-UAS-Kripto-2020%20(54).pdf). And it is intended as a complement only. To use it in real environment, follow the steps in the paper.
 
 ## Python Version
 `$ python --version`\
